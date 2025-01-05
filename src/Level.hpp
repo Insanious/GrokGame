@@ -5,7 +5,8 @@
 
 enum TileType
 {
-    SPACE = 0,
+    EMPTY = 0,
+    SPACE,
     CENTER,
     ROOM,
     WALL_LEFT,
@@ -51,7 +52,9 @@ struct Room
     std::vector<Tile> tiles;
     RoomShape shape;
 
-    Room(const std::vector<sf::IntRect>& _rects, RoomShape _shape): rects(_rects), shape(_shape)
+    Room(const std::vector<sf::IntRect>& _rects, RoomShape _shape):
+        rects(_rects),
+        shape(_shape)
     {
         for (const auto& rect: this->rects) {
             std::vector<sf::Vector2i> allRectPoints = rectPoints(rect);
@@ -127,6 +130,23 @@ struct Room
     }
 };
 
+struct Layer
+{
+    std::vector<std::vector<sf::RectangleShape>> rects;
+    std::vector<std::vector<TileType>> tiles;
+
+    Layer(sf::Vector2i mapSize, const sf::Texture *texture, sf::Vector2f tileSize) {
+        tiles = std::vector<std::vector<TileType>>(mapSize.y, std::vector<TileType>(mapSize.x, EMPTY));
+        rects = std::vector<std::vector<sf::RectangleShape>>(mapSize.x, std::vector<sf::RectangleShape>(mapSize.y));
+        for (i32 y = 0; y < mapSize.y; y++) {
+            for (i32 x = 0; x < mapSize.x; x++) {
+                rects[y][x] = sf::RectangleShape(tileSize);
+                rects[y][x].setTexture(texture);
+            }
+        }
+    }
+};
+
 struct Level : public sf::Drawable
 {
     Level(const Level&) = delete;
@@ -136,19 +156,18 @@ struct Level : public sf::Drawable
     sf::Vector2f TILE_SIZE;
     sf::Vector2f TILESET_SIZE;
 
-    std::vector<std::vector<sf::RectangleShape>> tiles;
     sf::Texture tileset;
+    std::vector<Layer> layers;
 
-    std::vector<std::vector<TileType>> map;
-    std::vector<Room> rooms;
     sf::IntRect center;
 
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
     void generate(sf::Vector2i mapSize);
+    sf::IntRect determineTextureRect(TileType type);
 
-    void generateRooms(sf::Vector2i mapSize);
-    bool roomCanBePlaced(sf::Vector2i mapSize, Room& room);
+    std::vector<Room> generateRooms(sf::Vector2i mapSize);
+    bool roomCanBePlaced(sf::Vector2i mapSize, std::vector<Room>& rooms, Room& room);
     std::vector<sf::IntRect> createRoomShape(const sf::Vector2i& pos, RoomShape shape);
 
     sf::Vector2f mapToScreen(sf::Vector2i index);
