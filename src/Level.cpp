@@ -1,8 +1,10 @@
 #include "Level.hpp"
 
-Level::Level()
+Level::Level():
+    TILE_SIZE(32, 16),
+    TILESET_SIZE(32, 32)
 {
-    if (!tileset.loadFromFile("resources/tileset_cave_1.png")) {
+    if (!tileset.loadFromFile("resources/tileset_isometric_pack_1bit_white.png")) {
         printf("failed to load\n");
         exit(0);
     }
@@ -19,10 +21,11 @@ void Level::draw(sf::RenderTarget& target, sf::RenderStates states) const
 
 void Level::generate(sf::Vector2i mapSize)
 {
-    map = std::vector<std::vector<TileType>>(mapSize.y, std::vector<TileType>(mapSize.x, WALL));
+    map = std::vector<std::vector<TileType>>(mapSize.y, std::vector<TileType>(mapSize.x, SPACE));
     rooms.clear();
 
-    center = sf::IntRect({ mapSize.x / 2, mapSize.y / 2 }, { mapSize.x / 4, mapSize.y / 4 });
+    sf::Vector2i centerSize({ mapSize.x / 4, mapSize.y / 4 });
+    center = sf::IntRect({ mapSize.x / 2 - centerSize.x + 1, mapSize.y / 2 - centerSize.y + 1 }, centerSize);
     for (i32 y = center.position.y; y < rectBottom(center); y++)
         for (i32 x = center.position.x; x < rectRight(center); x++)
             map[y][x] = CENTER;
@@ -30,25 +33,20 @@ void Level::generate(sf::Vector2i mapSize)
     generateRooms(mapSize);
 
     tiles = std::vector<std::vector<sf::RectangleShape>>(mapSize.x, std::vector<sf::RectangleShape>(mapSize.y));
-    sf::Vector2f size({ TILE_WIDTH, TILE_HEIGHT });
     for (i32 y = 0; y < mapSize.y; y++) {
         for (i32 x = 0; x < mapSize.x; x++) {
-            sf::RectangleShape tile(size);
+            sf::RectangleShape tile(TILESET_SIZE);
             tile.setPosition(mapToScreen({x, y}));
             tile.setTexture(&tileset);
 
-            sf::Vector2i wall({ 0, 0 });
-            sf::Vector2i path({ 64, 32 });
-            sf::Vector2i room({ 64, 64 });
-            sf::Vector2i center({ 64, 128 });
-            sf::Vector2i door({ 64, 128 });
+            sf::Vector2i room({ 0, 0 });
+            sf::Vector2i center({ 32, 0 });
+            sf::Vector2i space({ 96, 0 });
             sf::IntRect rect;
             switch (map[y][x]) {
-                case WALL:      rect = sf::IntRect(wall, sf::Vector2i(size));   break;
-                case PATH:      rect = sf::IntRect(path, sf::Vector2i(size));   break;
-                case ROOM:      rect = sf::IntRect(room, sf::Vector2i(size));   break;
-                case CENTER:    rect = sf::IntRect(center, sf::Vector2i(size)); break;
-                case DOOR:      rect = sf::IntRect(door, sf::Vector2i(size));   break;
+                case SPACE:      rect = sf::IntRect(space, sf::Vector2i(TILESET_SIZE));   break;
+                case ROOM:      rect = sf::IntRect(room, sf::Vector2i(TILESET_SIZE));   break;
+                case CENTER:    rect = sf::IntRect(center, sf::Vector2i(TILESET_SIZE)); break;
             }
             tile.setTextureRect(rect);
             tiles[y][x] = tile;
@@ -60,18 +58,17 @@ void Level::generateRooms(sf::Vector2i mapSize)
 {
     i32 maxAttempts = 200;
     i32 attempts = 0;
-    while (rooms.size() < 12 || attempts++ >= maxAttempts) {
+    while (attempts++ < maxAttempts && rooms.size() < 12) {
         sf::Vector2i pos({ 1 + (rand() % mapSize.x), 1 + (rand() % mapSize.y) });
         RoomShape shape = static_cast<RoomShape>(rand() % ROOM_SHAPE_COUNT);
 
         auto rects = createRoomShape(pos, shape);
         Room room(rects, shape);
         if (roomCanBePlaced(mapSize, room)) {
-            for (const auto& rect : rects)
-                for (const auto& point : pointsIntRect(rect))
-                    map[point.y][point.x] = ROOM;
-
             rooms.push_back(room);
+            for (const auto& rect : rects)
+                for (const auto& point : rectPoints(rect))
+                    map[point.y][point.x] = ROOM;
         }
     }
 }
@@ -165,15 +162,15 @@ bool Level::roomCanBePlaced(sf::Vector2i mapSize, Room& room)
 sf::Vector2f Level::mapToScreen(sf::Vector2i index)
 {
     return sf::Vector2f(
-        (float)(index.x - index.y) * TILE_WIDTH / 2,
-        (float)(index.x + index.y) * TILE_HEIGHT / 2
+        (index.x - index.y) * TILE_SIZE.x / 2,
+        (index.x + index.y) * TILE_SIZE.y / 2
     );
 }
 
-sf::Vector2i Level::screenToMap(sf::Vector2f screen)
+sf::Vector2i Level::screenToMap(sf::Vector2f point)
 {
     return sf::Vector2i(
-        (int)(screen.x / TILE_WIDTH + screen.y / TILE_HEIGHT),
-        (int)(screen.y / TILE_HEIGHT - screen.x / TILE_WIDTH)
+        (int)(point.x / TILE_SIZE.x + point.y / TILE_SIZE.y),
+        (int)(point.y / TILE_SIZE.y - point.x / TILE_SIZE.x)
     );
 }

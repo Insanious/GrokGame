@@ -5,11 +5,9 @@
 
 enum TileType
 {
-    WALL = 0,
-    PATH = 1,
+    SPACE = 0,
     ROOM = 2,
-    CENTER = 3,
-    DOOR = 4
+    CENTER = 3
 };
 
 enum RoomShape
@@ -30,7 +28,7 @@ struct Room
 
     bool overlaps(const Room& other) const {
         for (const auto& rect : rects) {
-            sf::IntRect oversized = oversizeIntRect(rect);
+            sf::IntRect oversized = oversizeRect(rect);
             for (const auto& otherRect : other.rects)
                 if (oversized.findIntersection(otherRect) != std::nullopt)
                     return true;
@@ -41,7 +39,7 @@ struct Room
 
     bool overlaps(const sf::IntRect& other) const {
         for (const auto& rect : rects) {
-            sf::IntRect oversized = oversizeIntRect(rect);
+            sf::IntRect oversized = oversizeRect(rect);
             if (oversized.findIntersection(other) != std::nullopt)
                 return true;
         }
@@ -56,8 +54,8 @@ struct Level : public sf::Drawable
     Level& operator=(const Level&) = delete;
     Level();
 
-    float TILE_WIDTH = 64;
-    float TILE_HEIGHT = 32;
+    sf::Vector2f TILE_SIZE;
+    sf::Vector2f TILESET_SIZE;
 
     std::vector<std::vector<sf::RectangleShape>> tiles;
     sf::Texture tileset;
@@ -75,5 +73,5 @@ struct Level : public sf::Drawable
     std::vector<sf::IntRect> createRoomShape(const sf::Vector2i& pos, RoomShape shape);
 
     sf::Vector2f mapToScreen(sf::Vector2i index);
-    sf::Vector2i screenToMap(sf::Vector2f vector);
+    sf::Vector2i screenToMap(sf::Vector2f point);
 };

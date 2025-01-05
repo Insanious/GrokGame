@@ -1,6 +1,6 @@
 PROJECT_NAME = GrokGame
 
-SFML_PATH = external/SFML-3.0.0/
+SFML_PATH = external/SFML-3.0.0
 SFML_LIB_PATH = $(SFML_PATH)/lib
 SFML_INCLUDE_PATH = $(SFML_PATH)/include
 
@@ -12,6 +12,7 @@ LDFLAGS += -lX11 -lXrandr -lXi -lXcursor -ludev -lpthread -ldl -lfreetype
 
 SRC = $(wildcard src/*.cpp)
 OBJ = $(patsubst src/%.cpp, build/%.o, $(SRC))
+HEADER = $(wildcard src/*.hpp)
 OUT = $(PROJECT_NAME)
 
 all: $(OUT)
@@ -20,7 +21,7 @@ $(OUT): build/pch.hpp.gch $(OBJ)
 	mkdir -p out
 	$(CXX) $(OBJ) -o out/$(OUT) $(LDFLAGS)
 
-build/%.o: src/%.cpp
+build/%.o: src/%.cpp $(HEADER)
 	$(CXX) $(CXXFLAGS) -include src/pch.hpp -c $< -o $@
 
 build/pch.hpp.gch: src/pch.hpp
