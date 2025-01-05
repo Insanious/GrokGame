@@ -114,7 +114,7 @@ std::vector<Room> Level::generateRooms(sf::Vector2i mapSize) {
 std::vector<sf::IntRect> Level::createRoomShape(const sf::Vector2i& pos, RoomShape shape) {
     switch (shape) {
         case L_SHAPE: {
-            sf::Vector2i baseSize(4, 8);
+            sf::Vector2i baseSize(5, 9);
             sf::Vector2i flippedSize(baseSize.y, baseSize.x);
             sf::IntRect top, bottom;
             switch (rand() % 4)
@@ -129,11 +129,11 @@ std::vector<sf::IntRect> Level::createRoomShape(const sf::Vector2i& pos, RoomSha
                     break;
                 case 2: // horizontal flip L (J)
                     top = sf::IntRect(pos, baseSize);
-                    bottom = sf::IntRect({ pos.x - baseSize.x, pos.y + baseSize.y }, flippedSize);
+                    bottom = sf::IntRect({ pos.x - baseSize.x + 1, pos.y + baseSize.y }, flippedSize);
                     break;
                 case 3: // double flip L (7)
                     top = sf::IntRect(pos, flippedSize);
-                    bottom = sf::IntRect({ pos.x + baseSize.x, pos.y + baseSize.x }, baseSize);
+                    bottom = sf::IntRect({ pos.x + baseSize.x - 1, pos.y + baseSize.x }, baseSize);
                     break;
             }
 
@@ -141,7 +141,7 @@ std::vector<sf::IntRect> Level::createRoomShape(const sf::Vector2i& pos, RoomSha
         }
 
         case T_SHAPE: {
-            sf::Vector2i baseSize(8, 4);
+            sf::Vector2i baseSize(9, 5);
             sf::Vector2i flippedSize(baseSize.y, baseSize.x);
             sf::IntRect top, bottom;
             switch (rand() % 4)
@@ -168,7 +168,7 @@ std::vector<sf::IntRect> Level::createRoomShape(const sf::Vector2i& pos, RoomSha
         }
 
         case RECTANGLE: {
-            sf::Vector2i baseSize(12, 6);
+            sf::Vector2i baseSize(13, 7);
             sf::Vector2i flippedSize(baseSize.y, baseSize.x);
             sf::IntRect rect(pos, rand() % 2 == 1 ? baseSize : flippedSize);
             return std::vector<sf::IntRect>({ rect });
