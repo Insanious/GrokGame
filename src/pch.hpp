@@ -2,6 +2,7 @@
 #include <SFML/System.hpp>
 #include <SFML/Window.hpp>
 #include <vector>
+#include <unordered_set>
 #include <cstdlib>
 #include <ctime>
 #include <cmath>

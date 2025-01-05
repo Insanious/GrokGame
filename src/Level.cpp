@@ -39,14 +39,24 @@ void Level::generate(sf::Vector2i mapSize)
             tile.setPosition(mapToScreen({x, y}));
             tile.setTexture(&tileset);
 
-            sf::Vector2i room({ 0, 0 });
-            sf::Vector2i center({ 32, 0 });
-            sf::Vector2i space({ 96, 0 });
-            sf::IntRect rect;
+            sf::Vector2i size({ (i32)TILESET_SIZE.x, (i32)TILESET_SIZE.y });
+            sf::IntRect rect({ 0, 0 }, size);
             switch (map[y][x]) {
-                case SPACE:      rect = sf::IntRect(space, sf::Vector2i(TILESET_SIZE));   break;
-                case ROOM:      rect = sf::IntRect(room, sf::Vector2i(TILESET_SIZE));   break;
-                case CENTER:    rect = sf::IntRect(center, sf::Vector2i(TILESET_SIZE)); break;
+                case SPACE:                     rect.position = { size.x * 3, size.y * 0 };     break;
+                case CENTER:                    rect.position = { size.x * 1, size.y * 0 };     break;
+                case ROOM:                      rect.position = { size.x * 0, size.y * 0 };     break;
+                case WALL_LEFT:                 rect.position = { size.x * 3, size.y * 3 };     break;
+                case WALL_RIGHT:                rect.position = { size.x * 0, size.y * 3 };     break;
+                case WALL_UP:                   rect.position = { size.x * 1, size.y * 3 };     break;
+                case WALL_DOWN:                 rect.position = { size.x * 2, size.y * 3 };     break;
+                case WALL_CORNER_DOWN_LEFT:     rect.position = { size.x * 6, size.y * 10 };    break;
+                case WALL_CORNER_DOWN_RIGHT:    rect.position = { size.x * 4, size.y * 10 };    break;
+                case WALL_CORNER_UP_LEFT:       rect.position = { size.x * 7, size.y * 10 };    break;
+                case WALL_CORNER_UP_RIGHT:      rect.position = { size.x * 5, size.y * 10 };    break;
+                case WALL_JUNCTION_DOWN_RIGHT:  rect.position = { size.x * 1, size.y * 4 };     break;
+                case WALL_JUNCTION_DOWN_LEFT:   rect.position = { size.x * 2, size.y * 4 };     break;
+                case WALL_JUNCTION_UP_RIGHT:    rect.position = { size.x * 0, size.y * 4 };     break;
+                case WALL_JUNCTION_UP_LEFT:     rect.position = { size.x * 3, size.y * 4 };     break;
             }
             tile.setTextureRect(rect);
             tiles[y][x] = tile;
@@ -65,10 +75,11 @@ void Level::generateRooms(sf::Vector2i mapSize)
         auto rects = createRoomShape(pos, shape);
         Room room(rects, shape);
         if (roomCanBePlaced(mapSize, room)) {
+            room.calculatePoints();
+            for (const auto& tile : room.tiles)
+                map[tile.point.y][tile.point.x] = tile.type;
+
             rooms.push_back(room);
-            for (const auto& rect : rects)
-                for (const auto& point : rectPoints(rect))
-                    map[point.y][point.x] = ROOM;
         }
     }
 }
