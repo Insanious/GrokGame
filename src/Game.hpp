@@ -16,9 +16,8 @@ struct Game
 
     sf::RenderWindow window;
     sf::View view;
-
     sf::Texture tileset;
     Level level;
-    sf::RectangleShape pointer;
-    sf::RectangleShape* highlighted;
+    sf::Sprite pointer;
+    sf::Sprite* highlighted;
 };

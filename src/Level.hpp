@@ -43,10 +43,17 @@ struct VectorHash {
 
 struct Tile
 {
+    sf::Sprite sprite;
     sf::Vector2i point;
     TileType type;
 
-    Tile(const sf::Vector2i _point, TileType _type):
+    Tile(sf::Texture &tileset):
+        sprite(tileset),
+        type(EMPTY)
+    {}
+
+    Tile(sf::Texture &tileset, sf::Vector2i _point, TileType _type):
+        sprite(tileset),
         point(_point),
         type(_type)
     {}
@@ -54,22 +61,40 @@ struct Tile
 
 struct Room
 {
-    std::vector<sf::IntRect> rects;
-    std::vector<sf::Vector2i> points;
     std::vector<Tile> tiles;
-    RoomShape shape;
 
-    Room(const std::vector<sf::IntRect>& _rects, RoomShape _shape):
-        rects(_rects),
-        shape(_shape)
-    {
-        for (const auto& rect: this->rects) {
-            std::vector<sf::Vector2i> allRectPoints = rectPoints(rect);
-            points.insert(points.end(), allRectPoints.begin(), allRectPoints.end());
+    Room(const std::vector<sf::IntRect>& rects, sf::Texture &tileset) {
+        std::unordered_set<sf::Vector2i, VectorHash> points;
+        for (const auto& rect: rects)
+            for (i32 y = 0; y < rect.size.y; y++)
+                for (i32 x = 0; x < rect.size.x; x++)
+                    points.emplace(rect.position.x + x, rect.position.y + y);
+
+        std::vector<sf::Vector2i> straightWalls;
+        for (auto& point: points) {
+            TileType type = determineTileType(points, point);
+            tiles.emplace_back(tileset, point, type);
+
+            if (type == WALL_LEFT || type == WALL_RIGHT || type == WALL_UP || type == WALL_DOWN)
+                straightWalls.push_back(point);
+        }
+
+        sf::Vector2i entrancePoint = straightWalls[rand() % straightWalls.size()];
+        Tile* entrance = nullptr;
+        for (u32 i = 0; entrance == nullptr && i < tiles.size(); i++)
+            if (tiles[i].point == entrancePoint)
+                entrance = &tiles[i];
+
+        switch (entrance->type) {
+            case WALL_LEFT:     entrance->type = ENTRANCE_LEFT;     break;
+            case WALL_RIGHT:    entrance->type = ENTRANCE_RIGHT;    break;
+            case WALL_UP:       entrance->type = ENTRANCE_UP;       break;
+            case WALL_DOWN:     entrance->type = ENTRANCE_DOWN;     break;
+            default:                                                break;
         }
     }
 
-    TileType determineTileType(const std::unordered_set<sf::Vector2i, VectorHash>& pointSet, const sf::Vector2i& point) {
+    TileType determineTileType(std::unordered_set<sf::Vector2i, VectorHash>& points, const sf::Vector2i& point) {
         sf::Vector2i neighbors[8] = {
             { point.x + 1, point.y },     // Right
             { point.x - 1, point.y },     // Left
@@ -82,10 +107,10 @@ struct Room
         };
 
         int mask = 0;
-        if (pointSet.find(neighbors[0]) == pointSet.end()) mask |= 1;
-        if (pointSet.find(neighbors[1]) == pointSet.end()) mask |= 2;
-        if (pointSet.find(neighbors[2]) == pointSet.end()) mask |= 4;
-        if (pointSet.find(neighbors[3]) == pointSet.end()) mask |= 8;
+        if (points.find(neighbors[0]) == points.end()) mask |= 1;
+        if (points.find(neighbors[1]) == points.end()) mask |= 2;
+        if (points.find(neighbors[2]) == points.end()) mask |= 4;
+        if (points.find(neighbors[3]) == points.end()) mask |= 8;
 
         switch (mask) {
             case 5:     return WALL_CORNER_DOWN_RIGHT;  // 0101
@@ -97,72 +122,27 @@ struct Room
             case 4:     return WALL_DOWN;
             case 8:     return WALL_UP;
             case 0:
-                if (pointSet.find(neighbors[4]) == pointSet.end()) return WALL_JUNCTION_DOWN_RIGHT;
-                if (pointSet.find(neighbors[5]) == pointSet.end()) return WALL_JUNCTION_DOWN_LEFT;
-                if (pointSet.find(neighbors[6]) == pointSet.end()) return WALL_JUNCTION_UP_RIGHT;
-                if (pointSet.find(neighbors[7]) == pointSet.end()) return WALL_JUNCTION_UP_LEFT;
+                if (points.find(neighbors[4]) == points.end()) return WALL_JUNCTION_DOWN_RIGHT;
+                if (points.find(neighbors[5]) == points.end()) return WALL_JUNCTION_DOWN_LEFT;
+                if (points.find(neighbors[6]) == points.end()) return WALL_JUNCTION_UP_RIGHT;
+                if (points.find(neighbors[7]) == points.end()) return WALL_JUNCTION_UP_LEFT;
                 break;
         }
 
         return ROOM;
     }
-
-    void calculateTileTypes() {
-        std::unordered_set<sf::Vector2i, VectorHash> pointSet(points.begin(), points.end());
-        std::vector<u32> straightWalls;
-        for (u32 i = 0; i < points.size(); i++) {
-            TileType type = determineTileType(pointSet, points[i]);
-            tiles.emplace_back(points[i], type);
-
-            if (type == WALL_LEFT || type == WALL_RIGHT || type == WALL_UP || type == WALL_DOWN)
-                straightWalls.push_back(i);
-        }
-
-        u32 entrance = straightWalls[rand() % straightWalls.size()];
-        switch (tiles[entrance].type) {
-            case WALL_LEFT:     tiles[entrance].type = ENTRANCE_LEFT;     break;
-            case WALL_RIGHT:    tiles[entrance].type = ENTRANCE_RIGHT;    break;
-            case WALL_UP:       tiles[entrance].type = ENTRANCE_UP;       break;
-            case WALL_DOWN:     tiles[entrance].type = ENTRANCE_DOWN;     break;
-            default:                                                      break;
-        }
-    }
-
-    bool overlaps(const Room& other) const {
-        for (const auto& rect : rects) {
-            sf::IntRect oversized = oversizeRect(rect);
-            for (const auto& otherRect : other.rects)
-                if (oversized.findIntersection(otherRect) != std::nullopt)
-                    return true;
-        }
-
-        return false;
-    }
-
-    bool overlaps(const sf::IntRect& other) const {
-        for (const auto& rect : rects) {
-            sf::IntRect oversized = oversizeRect(rect);
-            if (oversized.findIntersection(other) != std::nullopt)
-                return true;
-        }
-
-        return false;
-    }
 };
 
 struct Layer
 {
-    std::vector<std::vector<sf::RectangleShape>> rects;
-    std::vector<std::vector<TileType>> tiles;
+    std::vector<std::vector<Tile>> tiles;
 
-    Layer(sf::Vector2i mapSize, const sf::Texture *texture, sf::Vector2f tileSize) {
-        tiles = std::vector<std::vector<TileType>>(mapSize.y, std::vector<TileType>(mapSize.x, EMPTY));
-        rects = std::vector<std::vector<sf::RectangleShape>>(mapSize.x, std::vector<sf::RectangleShape>(mapSize.y));
+    Layer(sf::Vector2i mapSize, sf::Texture &tileset) {
+        tiles.resize(mapSize.y);
         for (i32 y = 0; y < mapSize.y; y++) {
-            for (i32 x = 0; x < mapSize.x; x++) {
-                rects[y][x] = sf::RectangleShape(tileSize);
-                rects[y][x].setTexture(texture);
-            }
+            tiles[y].reserve(mapSize.x);
+            for (i32 x = 0; x < mapSize.x; x++)
+                tiles[y].emplace_back(tileset);
         }
     }
 };
@@ -184,14 +164,14 @@ struct Level : public sf::Drawable
 
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
-    void generate(sf::Texture* tileset);
+    void generate(sf::Texture& tileset);
     sf::IntRect determineTextureRect(TileType type);
 
-    std::vector<Room> generateRooms();
+    std::vector<Room> generateRooms(sf::Texture &tileset);
     std::vector<sf::IntRect> createRoomShape(const sf::Vector2i& pos, RoomShape shape);
-    bool roomCanBePlaced(std::vector<Room>& rooms, Room& room);
+    bool roomCanBePlaced(std::vector<sf::IntRect>& rects, std::vector<sf::IntRect>& others);
 
-    sf::RectangleShape* getRect(sf::Vector2i index);
+    sf::Sprite* getSprite(sf::Vector2i index);
 
     bool outOfBounds(sf::Vector2i index);
     bool outOfBounds(sf::IntRect rect);

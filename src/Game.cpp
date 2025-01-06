@@ -3,20 +3,16 @@
 Game::Game(u32 x, u32 y):
     window(sf::VideoMode({ x, y }), "Title"),
     view({ 0.f, 0.f }, { x / 2.f, y / 2.f }),
+    tileset("resources/tileset_isometric_pack_1bit_white.png"),
     level({ 64, 64 }, { 32, 16 }, { 32, 32 }),
+    pointer(tileset),
     highlighted(nullptr)
 {
     std::srand(0); // TODO: rng
     window.setView(view);
 
-    if (!tileset.loadFromFile("resources/tileset_isometric_pack_1bit_white.png")) {
-        printf("failed to load texture\n");
-        exit(0);
-    }
-    level.generate(&tileset);
+    level.generate(tileset);
 
-    pointer.setSize(level.tilesetSize);
-    pointer.setTexture(&tileset);
     sf::Vector2i size(level.tilesetSize);
     pointer.setTextureRect(sf::IntRect({ size.x * 3, size.y * 20 }, size));
 }
@@ -82,7 +78,7 @@ void Game::update(sf::Time dt)
             if (keyPressed->scancode == sf::Keyboard::Scancode::Escape) {
                 window.close();
             } else if (keyPressed->scancode == sf::Keyboard::Scancode::R) {
-                level.generate(&tileset);
+                level.generate(tileset);
                 highlighted = nullptr;
             }
         } else if (const auto* scroll = event->getIf<sf::Event::MouseWheelScrolled>()) {
@@ -91,10 +87,10 @@ void Game::update(sf::Time dt)
         } else if (const auto* mouseButtonPressed = event->getIf<sf::Event::MouseButtonPressed>()) {
             if (mouseButtonPressed->button == sf::Mouse::Button::Left) {
                 if (highlighted)
-                        highlighted->setFillColor(sf::Color::White);
+                        highlighted->setColor(sf::Color::White);
 
-                if ((highlighted = level.getRect(gridPos)))
-                    highlighted->setFillColor(sf::Color::Red);
+                if ((highlighted = level.getSprite(gridPos)))
+                    highlighted->setColor(sf::Color::Red);
             }
         }
     }
