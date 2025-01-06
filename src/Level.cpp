@@ -84,6 +84,10 @@ sf::IntRect Level::determineTextureRect(TileType type) {
         case WALL_JUNCTION_DOWN_LEFT:   return sf::IntRect({ size.x * 2, size.y * 4 }, size);
         case WALL_JUNCTION_UP_RIGHT:    return sf::IntRect({ size.x * 0, size.y * 4 }, size);
         case WALL_JUNCTION_UP_LEFT:     return sf::IntRect({ size.x * 3, size.y * 4 }, size);
+        case ENTRANCE_LEFT:             return sf::IntRect({ size.x * 10, size.y * 7 }, size);
+        case ENTRANCE_RIGHT:            return sf::IntRect({ size.x * 10, size.y * 1 }, size);
+        case ENTRANCE_UP:               return sf::IntRect({ size.x * 11, size.y * 7 }, size);
+        case ENTRANCE_DOWN:             return sf::IntRect({ size.x * 11, size.y * 1 }, size);
         default:                        return sf::IntRect({ size.x * 2, size.y * 23 }, size); // same as empty
     }
 }
@@ -103,7 +107,7 @@ std::vector<Room> Level::generateRooms(sf::Vector2i mapSize) {
         auto rects = createRoomShape(pos, shape);
         Room room(rects, shape);
         if (roomCanBePlaced(mapSize, rooms, room)) {
-            room.calculatePoints();
+            room.calculateTileTypes();
             rooms.push_back(room);
         }
     }
