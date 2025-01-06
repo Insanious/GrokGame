@@ -46,7 +46,10 @@ struct Tile
     sf::Vector2i point;
     TileType type;
 
-    Tile(const sf::Vector2i _point, TileType _type): point(_point), type(_type) {}
+    Tile(const sf::Vector2i _point, TileType _type):
+        point(_point),
+        type(_type)
+    {}
 };
 
 struct Room
@@ -169,24 +172,29 @@ struct Level : public sf::Drawable
     Level(const Level&) = delete;
     Level& operator=(const Level&) = delete;
     Level();
+    Level(sf::Vector2i _mapSize, sf::Vector2f tileSize, sf::Vector2f tilesetSize);
 
-    sf::Vector2f TILE_SIZE;
-    sf::Vector2f TILESET_SIZE;
+    sf::Vector2i mapSize;
+    sf::Vector2f tileSize;
+    sf::Vector2f tilesetSize;
 
-    sf::Texture tileset;
     std::vector<Layer> layers;
 
     sf::IntRect center;
 
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
-    void generate(sf::Vector2i mapSize);
+    void generate(sf::Texture* tileset);
     sf::IntRect determineTextureRect(TileType type);
 
-    std::vector<Room> generateRooms(sf::Vector2i mapSize);
-    bool roomCanBePlaced(sf::Vector2i mapSize, std::vector<Room>& rooms, Room& room);
+    std::vector<Room> generateRooms();
     std::vector<sf::IntRect> createRoomShape(const sf::Vector2i& pos, RoomShape shape);
+    bool roomCanBePlaced(std::vector<Room>& rooms, Room& room);
 
+    sf::RectangleShape* getRect(sf::Vector2i index);
+
+    bool outOfBounds(sf::Vector2i index);
+    bool outOfBounds(sf::IntRect rect);
     sf::Vector2f mapToScreen(sf::Vector2i index);
     sf::Vector2i screenToMap(sf::Vector2f point);
 };
