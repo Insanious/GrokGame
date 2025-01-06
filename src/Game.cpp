@@ -4,6 +4,7 @@ Game::Game(u32 x, u32 y):
     window(sf::VideoMode({ x, y }), "Title"),
     view({ 0.f, 0.f }, { x / 2.f, y / 2.f }),
     tileset("resources/tileset_isometric_pack_1bit_white.png"),
+    playerTexture("resources/Mage-Sheet.png"),
     level({ 64, 64 }, { 32, 16 }, { 32, 32 }),
     pointer(tileset),
     highlighted(nullptr)
@@ -12,6 +13,7 @@ Game::Game(u32 x, u32 y):
     window.setView(view);
 
     level.generate(tileset);
+    playerManager.addPlayer(playerTexture, { 0, 300 }, { 32, 48 });
 
     sf::Vector2i size(level.tilesetSize);
     pointer.setTextureRect(sf::IntRect({ size.x * 3, size.y * 20 }, size));
@@ -22,6 +24,7 @@ void Game::draw()
     window.clear();
 
     window.draw(level);
+    window.draw(playerManager);
     window.draw(pointer);
 
     window.display();
@@ -53,6 +56,8 @@ void Game::run(int framesPerSeconds)
 
 void Game::update(sf::Time dt)
 {
+    playerManager.update();
+
     f32 panSpeed = 600.f * dt.asSeconds();
     f32 zoomSpeed = -0.1f;
     sf::Vector2f panDirection = { 0.f, 0.f };

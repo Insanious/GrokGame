@@ -149,24 +149,19 @@ struct Layer
 
 struct Level : public sf::Drawable
 {
-    Level(const Level&) = delete;
-    Level& operator=(const Level&) = delete;
-    Level();
-    Level(sf::Vector2i _mapSize, sf::Vector2f tileSize, sf::Vector2f tilesetSize);
-
+    std::vector<Layer> layers;
     sf::Vector2i mapSize;
     sf::Vector2f tileSize;
     sf::Vector2f tilesetSize;
-
-    std::vector<Layer> layers;
-
     sf::IntRect center;
+
+    Level() = delete;
+    Level(sf::Vector2i _mapSize, sf::Vector2f tileSize, sf::Vector2f tilesetSize);
 
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
     void generate(sf::Texture& tileset);
     sf::IntRect determineTextureRect(TileType type);
-
     std::vector<Room> generateRooms(sf::Texture &tileset);
     std::vector<sf::IntRect> createRoomShape(const sf::Vector2i& pos, RoomShape shape);
     bool roomCanBePlaced(std::vector<sf::IntRect>& rects, std::vector<sf::IntRect>& others);

@@ -1,7 +1,5 @@
 #include "Level.hpp"
 
-Level::Level() {}
-
 Level::Level(sf::Vector2i _mapSize, sf::Vector2f _tileSize, sf::Vector2f _tilesetSize):
     mapSize(_mapSize),
     tileSize(_tileSize),
@@ -86,7 +84,7 @@ sf::IntRect Level::determineTextureRect(TileType type) {
         case ENTRANCE_RIGHT:            return sf::IntRect({ size.x * 10, size.y * 1 }, size);
         case ENTRANCE_UP:               return sf::IntRect({ size.x * 11, size.y * 7 }, size);
         case ENTRANCE_DOWN:             return sf::IntRect({ size.x * 11, size.y * 1 }, size);
-        default:                        return sf::IntRect({ size.x * 2, size.y * 23 }, size); // same as empty
+        default:                        return sf::IntRect({ size.x * 2, size.y * 23 }, size);
     }
 }
 
